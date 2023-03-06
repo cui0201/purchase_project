@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.spare.mapper.SpareMapper">
+    <resultMap id="SpareQueryAllArg" type="com.cyh.spare.bean.SpareQueryAllArg">
+        <id property="id" column="id"></id>
+        <result property="code" column="code"></result>
+        <result property="name" column="name"></result>
+        <result property="status" column="status"></result>
+        <result property="subClassName" column="subClassName"></result>
+        <result property="planClassName" column="planClassName"></result>
+    </resultMap>
+    <resultMap id="updateSpare" type="com.cyh.corporatefactory.bean.LegalPer">
+        <id property="id" column="id"></id>
+        <result property="legalPersonName" column="legalperson_name"></result>
+    </resultMap>
+    <insert id="AddSpare" useGeneratedKeys="true" keyProperty="id" keyColumn="id"
+            parameterType="com.cyh.spare.bean.SpareAdd">
+        INSERT
+        spare(`code`,`name`,`status`,create_per,create_time,modify_time,modify_per,version,subclass_id,plancategory_id)
+            values (
+        #{code},
+        #{name},
+        #{status},
+        #{createPer},
+        SYSDATE
+        (
+        ),
+        SYSDATE
+        (
+        ),
+        #{modifyPer},
+        version
+        =
+        version
+        +
+        1,
+        #{subClassId},
+        #{planClassId}
+        )
+
+    </insert>
+    <insert id="AddSpareLegal" parameterType="com.cyh.spare.bean.SpareAdd">
+        insert into spare_person(spare_id,legalperson_id) values
+        <foreach collection="legalPersonIds" item="legalPersonId" open="(" separator="),(" close=")">
+            #{id},#{legalPersonId}
+        </foreach>
+    </insert>
+    <update id="updateStatus">
+        update spare
+        set status     = #{status},
+            modify_time=SYSDATE(),
+            modify_per = #{modifyPer},
+            version=version + 1
+        where id = #{id}
+    </update>
+    <update id="modifySpare">
+        UPDATE spare
+        SET spare.`name`=#{name},
+            spare.`status`=#{status},
+            spare.modify_per=#{modifyPer},
+            spare.modify_time=SYSDATE(),
+            spare.subclass_id=#{subClassId},
+            spare.plancategory_id=#{planClassId},
+            spare.version=version + 1
+        where spare.id = #{id}
+    </update>
+    <update id="modifySparePerson">
+        update spare_person
+        set legalperson_id=#{LegalPersonId}
+        where id = #{id}
+
+    </update>
+    <delete id="deleteSpare">
+        DELETE
+        FROM spare_person
+        WHERE spare_person.spare_id = #{id}
+    </delete>
+
+
+    <select id="getCountByCondition" resultType="java.lang.Integer">
+        select COUNT(s.id) from
+        spare as s,subclass AS sub,plancategory as pla
+        <where>
+            s.subclass_id =sub.id and s.plancategory_id=pla.id
+            <if test="code !=null and code!=''">
+                and s.code like concat('%',#{code},'%')
+            </if>
+            <if test="name !=null and name!=''">
+                and s.name like concat('%',#{name},'%')
+            </if>
+            <if test="status!=null">
+                and s.status =#{status}
+            </if>
+        </where>
+    </select>
+    <select id="getAllByCondition" resultMap="SpareQueryAllArg">
+        select s.id, s.`code`,s.`name`,s.`status`,sub.sname as subClassName,pla.`name` as planClassName
+        from spare as s,subclass AS sub,plancategory as pla
+        <where>
+            s.subclass_id =sub.id and s.plancategory_id=pla.id
+            <if test="spareQuery.code !=null and spareQuery.code!=''">
+                and s.code like concat('%',#{spareQuery.code},'%')
+            </if>
+            <if test="spareQuery.name !=null and spareQuery.name!=''">
+                and s.name like concat('%',#{spareQuery.name},'%')
+            </if>
+            <if test="spareQuery.status!=null">
+                and s.status =#{spareQuery.status}
+            </if>
+        </where>
+        ORDER BY s.create_time DESC LIMIT #{startNum},#{spareQuery.pageSize}
+    </select>
+    <select id="getIdByCode" resultType="java.lang.Integer">
+        select id
+        from spare
+        where code = #{code};
+    </select>
+    <select id="getLegalPerson" resultMap="updateSpare">
+        SELECT lp.legalperson_name
+        from legalperson as lp,
+             spare_person as sp
+        WHERE sp.legalperson_id = lp.id
+          and sp.spare_id = #{id}
+    </select>
+    <select id="getIdBySpareId" resultType="java.lang.Integer">
+        select id
+        from spare_person
+        where spare_id = #{id}
+    </select>
+    <select id="getAllLegalPerson" resultType="com.cyh.spare.bean.SpareLegalPersonPage">
+        SELECT sp.spare_id as spareId,lp.legalperson_name as legalPersonName FROM spare_person AS sp LEFT JOIN
+        legalperson as lp ON sp.legalperson_id = lp.id
+        where sp.spare_id in
+        <foreach collection="legalPages" item="legalPage" open="(" separator="," close=")">
+            #{legalPage}
+        </foreach>
+
+    </select>
+    <select id="getPersonIdByCode" resultType="com.cyh.spare.bean.SpareSubclass">
+        SELECT s.`code` as spareCode, s.`name` as spareName, su.sname as subClassName
+        from spare as s
+                 LEFT JOIN spare_person as sp on s.id = sp.spare_id
+                 LEFT JOIN legalperson as le on sp.legalperson_id = le.id
+                 LEFT JOIN subclass as su on s.subclass_id = su.id
+        WHERE le.legalperson_code = #{legalPersonCode}
+        GROUP BY s.id
+    </select>
+    <select id="getSpareByLegalPerson" resultType="com.cyh.spare.bean.SpareForThresholdValue">
+        select s.id          as spareId,
+               s.`name`      as spareName,
+               s.`code`      as spareCode,
+               s.subclass_id as subclassId,
+               su.sname      as subclassName,
+               su.scode      as subclassCode
+        from spare_person as sp
+                 LEFT JOIN spare AS s on sp.spare_id = s.id
+                 LEFT JOIN subclass as su on s.subclass_id = su.id
+        WHERE sp.legalperson_id = #{legalPersonId}
+    </select>
+</mapper>

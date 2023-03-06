@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.subclass.mapper.SubClassMapper">
+    <resultMap id="subclassMap" type="com.cyh.subclass.bean.SubClass">
+        <id property="id" column="id"></id>
+        <result property="code" column="scode"></result>
+        <result property="name" column="sname"></result>
+        <result property="status" column="sstatus"></result>
+        <result property="remark" column="sdescribe"></result>
+        <result property="createPer" column="create_per"></result>
+        <result property="createTime" column="create_time"></result>
+        <result property="modifyTime" column="modify_time"></result>
+        <result property="modifyPer" column="modify_per"></result>
+    </resultMap>
+    <insert id="insertDate" parameterType="com.cyh.subclass.bean.SubClass">
+        INSERT INTO subclass(scode,sname,sstatus,sdescribe,create_time,create_per,modify_time,modify_per)
+        VALUES(#{code},#{name},#{status},#{remark},#{createTime},#{createPer},#{modifyTime},#{modifyPer})
+    </insert>
+    <insert id="insertByImport" parameterType="com.cyh.subclass.bean.SubClass">
+        INSERT INTO subclass(scode,sname,sstatus,sdescribe,create_time,create_per,modify_time,modify_per)VALUES
+        <foreach collection="subClasses" item="subClass" open="(" separator="),(" close=")">
+            #{subClass.code},#{subClass.name},#{subClass.status},#{subClass.remark},#{subClass.createTime},#{subClass.createPer},#{subClass.modifyTime},#{subClass.modifyPer}
+        </foreach>
+
+</insert>
+    <update id="modifySubClass" parameterType="com.cyh.subclass.bean.SubClassModify">
+        update subclass <set>
+        <if test="name!=null and name!=''">
+            sname =  #{name},
+        </if>
+        <if test="status!=null">
+            sstatus = #{status},
+        </if>
+        <if test="remark!=null and remark!=null">
+            sdescribe=#{remark},
+        </if>
+            modify_time=SYSDATE(),modify_per = #{modifyPer},version=version+1
+    </set>
+        where id=#{id} and version= #{version}
+    </update>
+    <update id="modifyStatus">
+        update subclass set sstatus = #{status}, modify_time=SYSDATE(),modify_per = #{modifyPer},version=version+1
+        where id= #{id}
+    </update>
+
+    <select id="getCountByCode" resultType="java.lang.Integer">
+        select count(*) from subclass where scode = #{code}
+    </select>
+    <select id="getCountByName" resultType="java.lang.Integer">
+        select count(*) from subclass where sname = #{name}
+    </select>
+    <select id="getSubClassById" resultMap="subclassMap">
+        select * from subclass where id = #{id}
+    </select>
+    <select id="getCountByNameId" resultType="java.lang.Integer">
+        select count(*) from subclass where sname=#{name} and id!=#{id}
+    </select>
+    <select id="querySubClassByCondition" resultMap="subclassMap">
+        select * from subclass
+        <where>
+            <if test="subClassPage.code!=null and subClassPage.code!=''">
+                and scode like concat('%',#{subClassPage.code},'%')
+            </if>
+            <if test="subClassPage.name!=null and subClassPage.name!=''">
+                and sname   like concat('%',#{subClassPage.name},'%')
+            </if>
+            <if test="subClassPage.status!=null">
+               and sstatus = #{subClassPage.status}
+            </if>
+        </where>
+        order by create_time desc limit #{startNum},#{pageSize}
+    </select>
+    <select id="getCountByCondition" resultType="java.lang.Integer">
+        select count(id) from subclass
+        <where>
+            <if test="code!=null and code!=''">
+                and scode like concat('%',#{code},'%')
+            </if>
+            <if test="name!=null and name!=''">
+                and sname   like concat('%',#{name},'%')
+            </if>
+            <if test="status!=null">
+                and sstatus = #{status}
+            </if>
+        </where>
+    </select>
+    <select id="getAllSpareName" resultType="com.cyh.subclass.bean.SubClass">
+        select  id as id,sname as name from subclass
+    </select>
+    <select id="getSubCountById" resultType="java.lang.Integer">
+        select count(*) from subclass where id = #{id}
+    </select>
+    <select id="querySubClass" resultMap="subclassMap">
+        select * from subclass
+    </select>
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.dictionarytable.mapper.DicMapper">
+
+    <insert id="insert">
+        INSERT
+        t_dictionary(t_dictionary.type,t_dictionary.`code`,t_dictionary.`name`,t_dictionary.`status`,t_dictionary.parent_code,t_dictionary.create_per,t_dictionary.create_time,t_dictionary.marker)
+VALUES(
+        #{type},
+        #{code},
+        #{name},
+        #{status},
+        #{parentCode},
+        #{createPer},
+        SYSDATE(),
+        #{marker}
+        )
+    </insert>
+    <update id="updateStatus">
+        UPDATE t_dictionary as td set td.`status` =#{status} where td.parent_code=#{code} or td.`code`=#{code}
+
+    </update>
+    <update id="updateStatusSon">
+        update t_dictionary as td set td.`status` =#{status} where td.`code`=#{code}
+    </update>
+    <select id="queryALl" resultType="com.cyh.dictionarytable.model.Dictionary">
+        SELECT td.type        as type,
+               td.`code`      as code,
+               td.`name`      as name,
+               td.parent_code as parentCode,
+               td.marker      as marker,
+               td.`status`    as status
+        from t_dictionary as td
+    </select>
+    <select id="queryTypeByCode" resultType="com.cyh.dictionarytable.model.Dictionary">
+        select td.type        as type,
+               td.`code`      as code,
+               td.`name`      as name,
+               td.parent_code as parentCode,
+               td.marker      as marker,
+               td.`status`    as status
+        from t_dictionary as td where td.`code` =#{code}
+    </select>
+    <select id="queryAllSonByParentCode" resultType="com.cyh.dictionarytable.model.Dictionary">
+        select td.type        as type,
+               td.`code`      as code,
+               td.`name`      as name,
+               td.parent_code as parentCode,
+               td.marker      as marker,
+               td.`status`    as status
+        from t_dictionary as td
+where td.parent_code =#{code}
+    </select>
+    <select id="countStatusFalse" resultType="java.lang.Integer">
+        select COUNT(td.type) from t_dictionary as td where td.parent_code=#{parentCode} and td.status=1
+    </select>
+    <select id="queryForNameAndCode" resultType="java.lang.Integer">
+        select * from t_dictionary as td where td.code=#{code} or td.name=#{name}
+    </select>
+</mapper>

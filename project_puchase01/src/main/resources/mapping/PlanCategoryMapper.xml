@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.plancategory.mapper.PlanCategoryMapper">
+    <resultMap id="PlanCategory" type="com.cyh.plancategory.bean.PlanCategory">
+        <id property="id" column="id"></id>
+        <result property="code" column="code"></result>
+        <result property="name" column="name"></result>
+        <result property="status" column="status"></result>
+        <result property="createPre" column="create_pre"></result>
+        <result property="createTime" column="create_time"></result>
+        <result property="modifyPre" column="modify_pre"></result>
+        <result property="modifyTime" column="modify_time"></result>
+        <result property="version" column="version"></result>
+    </resultMap>
+    <insert id="addPlanCategory">
+        insert into plancategory(code, name, remark, status, create_time, create_pre, modify_time, modify_pre)
+        values (#{code}, #{name}, #{remark}, #{status}, SYSDATE(), #{createPre}, SYSDATE(), #{modifyPre})
+    </insert>
+    <update id="updateStatus">
+        update plancategory
+        set status=#{status},
+            modify_pre=#{modifyPre},
+            modify_time=SYSDATE(),
+            version=version + 1
+        where id = #{id}
+    </update>
+    <update id="update">
+        update plancategory
+        set name=#{name},
+            status=#{status},
+            remark=#{remark},
+            modify_pre=#{modifyPre},
+            modify_time=SYSDATE(),
+            version=version + 1
+        where id = #{id}
+          and version = #{version}
+    </update>
+
+    <select id="getCountByCondition" resultType="java.lang.Integer">
+        select count(id) from plancategory
+        <where>
+            <if test="code !=null and code !=''">
+                'code' like concat('%',#{code},'%')
+            </if>
+            <if test="name!=null and name !=''">
+                and 'name' like concat('%',#{code},'%')
+            </if>
+            <if test="status!=null">
+                status = #{status}
+            </if>
+
+        </where>
+    </select>
+    <select id="queryPage" resultMap="PlanCategory">
+        select * from plancategory
+        <where>
+            <if test="planCategoryPage.code !=null and planCategoryPage.code !=''">
+                'code' like concat('%',#{planCategoryPage.code},'%')
+            </if>
+            <if test="planCategoryPage.name !=null and planCategoryPage.name!=''">
+                and 'name' like concat('%',#{planCategoryPage.name},'%')
+            </if>
+            <if test="planCategoryPage.status!=null">
+                and status =#{planCategoryPage.status}
+            </if>
+        </where>
+        order by create_time desc limit #{startNum},#{planCategoryPage.pageSize}
+    </select>
+    <select id="getPlanCategoryById" resultMap="PlanCategory">
+        select *
+        from plancategory
+        where id = #{id}
+    </select>
+    <select id="getAllPlanCategoryName" resultType="com.cyh.plancategory.bean.PlanCategory">
+        select id, name
+        from plancategory
+    </select>
+    <select id="getPlanCountById" resultType="java.lang.Integer">
+        select count(*)
+        from plancategory
+        where id = #{id}
+    </select>
+    <select id="getlegalPersonIdByCode" resultType="java.lang.Integer">
+        select id as legalPersonId from legalperson where legalperson_code=#{legalPersonCode}
+    </select>
+    <select id="queryPlantListByLegalPersonCode"
+            resultType="com.cyh.corporatefactory.bean.LegalFactoryForPlantList">
+        select legalplant_code as legalPlantCode,legalplant_dec as legalPlantDec from legalplant where legalperson_id=#{legalPersonId}
+    </select>
+</mapper>

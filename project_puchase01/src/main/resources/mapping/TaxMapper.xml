@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.Tax.mapper.TaxMapper">
+    <insert id="addTax">
+        INSERT
+        tax(tax.tax_code,tax.tax_rate,tax.tax_dec,tax.`status`,tax.create_per,tax.create_time,tax.version)
+        VALUES(
+        #{taxCode},
+        #{tax},
+        #{taxDec},
+        #{status},
+        #{createPer},
+        SYSDATE
+        (
+        ),
+        version
+        +
+        1
+        )
+    </insert>
+    <update id="updateTax">
+        UPDATE tax
+        SET tax.tax_Dec=#{taxDec},
+            tax.tax_rate=#{tax},
+            tax.`status`=#{status},
+            tax.modify_per=#{modifyPer},
+            tax.modify_time=SYSDATE()
+        WHERE tax.tax_code = #{taxCode}
+    </update>
+    <update id="updateStatus">
+        update tax
+        set tax.`status`=#{status}
+        where tax.id = #{id}
+    </update>
+
+    <select id="getTotalSizeByCondition" resultType="java.lang.Integer">
+        select count(id) from tax
+        <where>
+            <if test="taxCode!=null and taxCode!=''">
+                tax_code like concat('%',#{taxCode},'%')
+            </if>
+            <if test="taxDec!=null and taxDec!=''">
+                tax_dec like concat('%',#{taxDec},'%')
+            </if>
+            <if test="tax!=null and tax!=''">
+                tax_rate like concat('%',#{tax},'%')
+            </if>
+            <if test="status!=null">
+                status like concat('%',#{status},'%')
+            </if>
+        </where>
+    </select>
+    <select id="getPageListByCondition" resultType="com.cyh.Tax.bean.TaxPageVo">
+        select t.id as id,t.tax_code as taxCode,t.tax_rate as taxRate,t.`status` as status,t.tax_dec as taxDec from tax
+        as t
+        <where>
+            <if test="taxCode!=null and taxCode!=''">
+                tax_code like concat('%',#{taxCode},'%')
+            </if>
+            <if test="taxDec!=null and taxDec!=''">
+                tax_dec like concat('%',#{taxDec},'%')
+            </if>
+            <if test="tax!=null and tax!=''">
+                tax_rate like concat('%',#{tax},'%')
+            </if>
+            <if test="status!=null">
+                status like concat('%',#{status},'%')
+            </if>
+        </where>
+        ORDER BY t.modify_time desc LIMIT #{startNum},#{pageSize}
+    </select>
+    <select id="textTaxCode" resultType="java.lang.Integer">
+        select count(id)
+        from tax
+        where tax_code = #{taxCode}
+    </select>
+    <select id="queryAllTaxType" resultType="com.cyh.Tax.bean.TaxQueryAll">
+        select t.id as id, t.tax_code as taxCode, t.tax_rate as taxRate, t.tax_dec as taxDec
+        from tax as t
+    </select>
+</mapper>

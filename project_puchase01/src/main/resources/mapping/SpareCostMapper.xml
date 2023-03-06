@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.sparepartscost.mapper.SpareCostMapper">
+    <insert id="insertSpareCost">
+        INSERT
+        t_spareprice(currency_code,spare_price,price_type,remark,status,material_unit,start_time,end_time,create_per,create_time,version,tax_id,legalplant_id,spare_id)
+            VALUES(
+        #{currencyCode},
+        #{price},
+        #{priceType},
+        #{remark},
+        1,
+        'PC',
+        #{startTime},
+        #{endTime},
+        #{createPer},
+        SYSDATE(),
+        version+1,
+        #{taxType},
+        #{plantId},
+        #{spareId}
+        )
+    </insert>
+    <update id="updatePriceCostStatus">
+        UPDATE t_spareprice as t
+        set t.`status`=#{status}
+        WHERE t.id = #{id}
+    </update>
+    <update id="updatePriceCost">
+        update t_spareprice as t
+        set t.start_time = #{startTime},
+            t.end_time   = #{endTime},
+            t.spare_price=#{price}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCostEndTime">
+        update t_spareprice as t
+        set t.end_time = #{endTime}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCostEndTimeForNewDate">
+        update t_spareprice as t
+        set t.end_time = #{newDate}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCOstStartTimeById">
+        update t_spareprice as t
+        set t.start_time = #{startTime}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCostEndTimeForUpdate">
+        update t_spareprice as t
+        set t.end_time = #{endTime},
+            t.spare_price=#{price},
+            t.remark=#{remark}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCostStartTimeByIdForOld">
+        update t_spareprice as t
+        set t.start_time = #{oldStartTime},
+            t.spare_price=#{price},
+            t.remark=#{remark}
+        where t.id = #{id}
+    </update>
+    <update id="updatePriceCostStartTimeById">
+        update t_spareprice as t
+        set t.start_time = #{startTime}
+        where t.id = #{id}
+    </update>
+    <delete id="deletePriceCost">
+        DELETE FROM t_spareprice WHERE id =#{id}
+    </delete>
+
+    <select id="getPriceTypeList" resultType="com.cyh.sparepartscost.bean.PriceType">
+        SELECT p.price_type as value,p.price_type_name as label
+        from t_price as p
+    </select>
+    <select id="getCurrencyList" resultType="com.cyh.sparepartscost.bean.Currency">
+        SELECT c.currency_code as value,c.currency_code_name as label
+        from t_currency as c
+    </select>
+    <select id="getTotalSizeByCondition" resultType="java.lang.Integer">
+        SELECT count(ts.id)
+        FROM t_spareprice as ts
+        left JOIN spare as s on ts.spare_id = s.id
+        LEFT JOIN legalplant as lp on ts.legalplant_id = lp.id
+        LEFT JOIN legalperson as per on lp.legalperson_id = per.id
+        LEFT JOIN t_currency as tc on tc.currency_code = ts.currency_code
+        left JOIN t_price as tp on tp.price_type = ts.price_type
+        LEFT JOIN tax as ta on ta.id = ts.tax_id
+        <where>
+            <if test="legalPersonCode!=null and legalPersonCode!=''">
+                per.legalperson_code =#{legalPersonCode}
+            </if>
+            <if test="legalPlantCode!=null and legalPlantCode!=''">
+                lp.legalplant_code =#{legalPlantCode}
+            </if>
+            <if test="materialCode!=null and materialCode!=''">
+                s.`code` =#{materialCode}
+            </if>
+            <if test="taxType!=null and taxType!=''">
+                ts.tax_id =#{taxType}
+            </if>
+            <if test="priceType!=null and priceType!=''">
+                ts.price_type =#{priceType}
+            </if>
+            <if test="currencyCode!=null and currencyCode!=''">
+                ts.currency_code =#{currencyCode}
+            </if>
+            <if test="startStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.start_time, '%Y-%m-%d')>=  DATE_FORMAT(#{startStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.start_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.end_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endEndTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.end_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endEndTime}, '%Y-%m-%d')   ]]>
+            </if>
+        </where>
+    </select>
+    <select id="queryListForPage" resultType="com.cyh.sparepartscost.bean.PriceCostPageVo">
+        SELECT ts.id as id,s.`code` as spareCode,s.`name` as spareName,lp.legalplant_dec as legalPlantDec,tp.price_type
+        as priceType,tp.price_type_name as
+        priceTypeName,tc.currency_code as currencyCode,tc.currency_code_name as currencyCodeName,ta.tax_dec as
+        taxDec,ts.material_unit as
+        materialUnit,ts.spare_price as price,ts.start_time as startTime,ts.end_time as endTime,ts.`status` as
+        status,ts.create_per as creatorName,ts.remark as remark,per.legalperson_name as
+        legalPersonName,per.legalperson_code as legalPersonCode
+        FROM t_spareprice as ts
+        left JOIN spare as s on ts.spare_id = s.id
+        LEFT JOIN legalplant as lp on ts.legalplant_id = lp.id
+        LEFT JOIN legalperson as per on lp.legalperson_id = per.id
+        LEFT JOIN t_currency as tc on tc.currency_code = ts.currency_code
+        left JOIN t_price as tp on tp.price_type = ts.price_type
+        LEFT JOIN tax as ta on ta.id = ts.tax_id
+        <where>
+            <if test="legalPersonCode!=null and legalPersonCode!=''">
+                per.legalperson_code =#{legalPersonCode}
+            </if>
+            <if test="legalPlantCode!=null and legalPlantCode!=''">
+                and lp.legalplant_code =#{legalPlantCode}
+            </if>
+            <if test="materialCode!=null and materialCode!=''">
+                s.`code` like concat('%',#{materialCode},'%')
+            </if>
+            <if test="taxType!=null and taxType!=''">
+                ts.tax_id =#{taxType}
+            </if>
+            <if test="priceType!=null and priceType!=''">
+                ts.price_type =#{priceType}
+            </if>
+            <if test="currencyCode!=null and currencyCode!=''">
+                ts.currency_code =#{currencyCode}
+            </if>
+            <if test="startStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.start_time, '%Y-%m-%d')>=  DATE_FORMAT(#{startStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.start_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endStartTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.end_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endStartTime}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="endEndTime!=null">
+                <![CDATA[   and DATE_FORMAT(ts.end_time, '%Y-%m-%d')>=  DATE_FORMAT(#{endEndTime}, '%Y-%m-%d')   ]]>
+            </if>
+        </where>
+        ORDER BY ts.create_time desc LIMIT #{startNum},#{pageSize}
+    </select>
+    <select id="getPriceCostForAdd" resultType="com.cyh.sparepartscost.bean.PriceCostForAdd">
+        SELECT ts.id as id, ts.spare_price as price, ts.start_time as startTime, ts.end_time as endTime,ts.remark as remark
+        FROM t_spareprice as ts
+                 left JOIN spare as s on ts.spare_id = s.id
+                 LEFT JOIN legalplant as lp on ts.legalplant_id = lp.id
+                 LEFT JOIN legalperson as per on lp.legalperson_id = per.id
+                 LEFT JOIN t_currency as tc on tc.currency_code = ts.currency_code
+                 left JOIN t_price as tp on tp.price_type = ts.price_type
+                 LEFT JOIN tax as ta on ta.id = ts.tax_id
+        where per.legalperson_code = #{legalPersonCode}
+          and lp.legalplant_code = #{legalPlantCode}
+          and s.`code` = #{materialCode}
+          and ts.tax_id = #{taxType}
+          and ts.currency_code = #{currencyCode}
+    </select>
+    <select id="getPriceCostById" resultType="com.cyh.sparepartscost.bean.update.PriceCostUpdateForText">
+        SELECT ts.tax_id as taxType, ts.id as id,s.`code` as materialCode,tp.price_type
+                     as priceType,tc.currency_code as currencyCode,ts.material_unit as
+                        materialUnit,ts.spare_price as price,ts.start_time as startTime,ts.end_time as endTime,ts.remark as remark,per.legalperson_code as legalPersonCode,
+               lp.legalplant_code as legalPlantCode
+        FROM t_spareprice as ts
+                 left JOIN spare as s on ts.spare_id = s.id
+                 LEFT JOIN legalplant as lp on ts.legalplant_id = lp.id
+                 LEFT JOIN legalperson as per on lp.legalperson_id = per.id
+                 LEFT JOIN t_currency as tc on tc.currency_code = ts.currency_code
+                 left JOIN t_price as tp on tp.price_type = ts.price_type
+                 LEFT JOIN tax as ta on ta.id = ts.tax_id
+where ts.id =#{id}
+    </select>
+    <select id="selectAllByPriceCost" resultType="com.cyh.sparepartscost.bean.update.PriceCostUpdateVo">
+        SELECT ts.id as id, ts.spare_price as price, ts.start_time as startTime, ts.end_time as endTime,ts.remark as remark
+        FROM t_spareprice as ts
+                 left JOIN spare as s on ts.spare_id = s.id
+                 LEFT JOIN legalplant as lp on ts.legalplant_id = lp.id
+                 LEFT JOIN legalperson as per on lp.legalperson_id = per.id
+                 LEFT JOIN t_currency as tc on tc.currency_code = ts.currency_code
+                 left JOIN t_price as tp on tp.price_type = ts.price_type
+                 LEFT JOIN tax as ta on ta.id = ts.tax_id
+        where per.legalperson_code = #{legalPersonCode}
+          and lp.legalplant_code = #{legalPlantCode}
+          and s.`code` = #{materialCode}
+          and ts.tax_id = #{taxType}
+          and ts.currency_code = #{currencyCode}
+          and ts.id != #{id}
+
+    </select>
+    <select id="getAllById" resultType="com.cyh.sparepartscost.bean.PriceCostAdd">
+        SELECT ts.id as id,ts.currency_code as currencyCode,ts.material_unit as materialCode,
+               ts.legalplant_id as plantId,ts.spare_price as price,ts.price_type as priceType,
+               ts.tax_id as taxType,ts.remark as remark,ts.end_time as endTime
+             ,ts.start_time as startTime,ts.spare_id as spareId,ts.create_per as createPer
+        from t_spareprice as ts
+        where ts.id =#{id}
+    </select>
+
+
+</mapper>

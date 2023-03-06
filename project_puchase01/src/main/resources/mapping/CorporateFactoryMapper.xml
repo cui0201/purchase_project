@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.corporatefactory.mapper.CorporateFactoryMapper">
+    <resultMap id="legalFactory" type="com.cyh.corporatefactory.bean.LegalFactory">
+        <id property="id" column="id"></id>
+        <result property="legalPlantCode" column="legalplant_code"></result>
+        <result property="legalPlantDec" column="legalplant_dec"></result>
+        <result property="legalPersonId" column="legalperson_id"></result>
+        <result property="enabled" column="enabled"></result>
+        <result property="legalPersonCode" column="legalperson_code"></result>
+        <result property="legalPersonName" column="legalperson_name"></result>
+        <result property="version" column="version"></result>
+    </resultMap>
+    <resultMap id="legalPer" type="com.cyh.corporatefactory.bean.LegalPer">
+        <id property="id" column="id"></id>
+        <result property="legalPersonCode" column="legalperson_code"></result>
+        <result property="legalPersonName" column="legalperson_name"></result>
+        <result property="enabled" column="enable"></result>
+    </resultMap>
+    <insert id="addLegalPlant">
+        INSERT INTO legalplant(legalplant_code, legalplant_dec, enabled, create_time, create_per, modify_time,
+                               modify_per, legalperson_id)
+        VALUES (#{legalPlantCode}, #{legalPlantDec}, #{enabled}, SYSDATE(), #{createPer}, SYSDATE(), #{modifyPer},
+                #{id})
+    </insert>
+    <update id="updateStatus">
+        UPDATE legalplant
+        SET legalplant.enabled    =#{enabled},
+            legalplant.version=version + 1,
+            legalplant.modify_per=#{modifyPer},
+            legalplant.modify_time=SYSDATE()
+        WHERE legalplant.id = #{id}
+    </update>
+    <update id="updateLegalPlant">
+        UPDATE legalplant
+        SET legalplant.legalplant_dec=#{legalPlantDec},
+            legalplant.enabled       =#{enabled},
+            legalplant.version=version + 1,
+            legalplant.modify_per=#{modifyPer},
+            legalplant.modify_time=SYSDATE()
+        WHERE legalplant.id = #{id}
+    </update>
+
+    <select id="countByCondition" resultType="java.lang.Integer">
+        SELECT COUNT(a.id) from legalplant a,legalperson b
+        <where>
+            a.legalperson_id=b.id
+            <if test="legalPersonCode !=null and legalPersonCode !=''">
+                and b.legalperson_code like concat('%',#{legalPersonCode},'%')
+            </if>
+            <if test="legalPlantCode !=null and legalPlantCode!=''">
+                and a.legalplant_code like concat('%',#{legalPlantCode},'%')
+            </if>
+            <if test="legalPlantDec !=null and legalPlantDec!=''">
+                and a.legalplant_dec like concat('%',#{legalPlantDec},'%')
+            </if>
+            <if test="enabled!=null">
+                and a.enabled =#{enabled}
+            </if>
+        </where>
+
+    </select>
+    <select id="queryByCondition" resultMap="legalFactory">
+        select * from legalplant a,legalperson b
+        <where>
+            a.legalperson_id=b.id
+            <if test="legalFactoryPage.legalPersonCode !=null and legalFactoryPage.legalPersonCode !=''">
+                and b.legalperson_code like concat('%',#{legalFactoryPage.legalPersonCode},'%')
+            </if>
+            <if test="legalFactoryPage.legalPlantCode !=null and legalFactoryPage.legalPlantCode!=''">
+                and a.legalplant_code like concat('%',#{legalFactoryPage.legalPlantCode},'%')
+            </if>
+            <if test="legalFactoryPage.legalPlantDec !=null and legalFactoryPage.legalPlantDec!=''">
+                and a.legalplant_dec like concat('%',#{legalFactoryPage.legalPlantDec},'%')
+            </if>
+            <if test="legalFactoryPage.enabled!=null">
+                and a.enabled =#{legalFactoryPage.enabled}
+            </if>
+        </where>
+        order by a.create_time desc limit #{startNum},#{legalFactoryPage.pageSize}
+    </select>
+    <select id="queryLegalPer" resultMap="legalPer">
+        SELECT legalperson.id, legalperson.legalperson_code, legalperson.legalperson_name
+        FROM legalperson
+    </select>
+    <select id="getIdByLegalPer" resultType="java.lang.Integer">
+        select id
+        from legalperson
+        where legalperson_code = #{legalPersonCode}
+    </select>
+    <select id="queryPlantListByLegalPersonCode" resultType="com.cyh.corporatefactory.bean.LegalFactory">
+        select legalplant.legalplant_code as legalPlantCode, legalplant.legalplant_dec as legalPlantDec
+        from legalplant
+        where legalperson_id = #{legalPersonCode}
+    </select>
+    <select id="getIdByPlantCode" resultType="java.lang.Integer">
+        select id as plantId from legalplant where  legalplant_code =#{legalPlantCode}
+    </select>
+</mapper>

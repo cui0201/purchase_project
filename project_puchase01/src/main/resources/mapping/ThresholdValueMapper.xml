@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyh.thresholdValue.mapper.ThresholdValueMapper">
+    <insert id="addThresholdValue">
+        INSERT
+        threshold_value(threshold_num,`status`,borrow_status,sell_status,description,create_time,create_per,version,legalperson_id,spare_id)
+VALUES(
+        #{fazhi},
+        #{status},
+        #{borrowStatus},
+        #{sellStatus},
+        #{remark},
+        SYSDATE(),
+        #{createPer},
+        version+1,
+        #{legalPersonId},
+        #{spareId}
+        )
+    </insert>
+    <update id="updateThresholdValue">
+        UPDATE threshold_value as tv
+        set tv.threshold_num=#{thresholdValue},
+            tv.description=#{description}
+        where tv.id = #{id}
+    </update>
+
+    <select id="countTotalPageSize" resultType="java.lang.Integer">
+        SELECT COUNT(tv.id) as totalSize
+        from threshold_value as tv
+        LEFT JOIN spare as s on tv.spare_id = s.id
+        LEFT JOIN legalperson as le on tv.legalperson_id = le.id
+        LEFT JOIN subclass as su on s.subclass_id = su.id
+        <where>
+            <if test="legalPersonCode!=null and legalPersonCode!=''">
+                and le.legalperson_code = #{legalPersonCode}
+            </if>
+            <if test="spareCode!=null and spareCode!=''">
+                and s.`code`=#{spareCode}
+            </if>
+            <if test="subclassCode!=null and subclassCode!=''">
+                and su.scode = #{spareCode}
+            </if>
+            <if test="fazhiStart!=null and fazhiStart!=''">
+                and tv.threshold_num &gt;=#{fazhiStart}
+            </if>
+            <if test="fazhiEnd!=null and fazhiEnd!=''">
+                and tv.threshold_num &lt;= #{fazhiEnd}
+            </if>
+            <if test="updateTimeStart !=null">
+                <![CDATA[   and DATE_FORMAT(tv.modify_time, '%Y-%m-%d')>=  DATE_FORMAT(#{updateTimeStart}, '%Y-%m-%d')   ]]>
+            </if>
+            <if test="updateTimeEnd !=null">
+                <![CDATA[  and DATE_FORMAT(tv.modify_time, '%Y-%m-%d') <= DATE_FORMAT(#{updateTimeEnd}, '%Y-%m-%d')    ]]>
+            </if>
+            <if test="updateName!=null and updateName">
+                and tv.modify_per like concat('%',#{updateName},'%')
+            </if>
+        </where>
+    </select>
+    <select id="queryAllForList" resultType="com.cyh.thresholdValue.bean.ThresholdValuePageVo">
+        SELECT tv.id as id,s.`code` as spareCode,s.`name` as spareName,tv.unit as unit,su.sname as
+        subClassName,tv.threshold_num as
+        thresholdNum,tv.`status` as status,tv.borrow_status as borrowStatus,tv.sell_status as sellStatus,tv.description
+        as description,le.legalperson_name as legalName,tv.create_per as createPer,tv.create_time as
+        createTime,tv.modify_time as modifyTime,tv.modify_per as modifyPer
+        from threshold_value as tv
+        LEFT JOIN spare as s on tv.spare_id = s.id
+        LEFT JOIN legalperson as le on tv.legalperson_id = le.id
+        LEFT JOIN subclass as su on s.subclass_id = su.id
+        <where>
+            <if test="legalPersonCode!=null and legalPersonCode!=''">
+                and le.legalperson_code = #{legalPersonCode}
+            </if>
+            <if test="spareCode!=null and spareCode!=''">
+                and s.`code`=#{spareCode}
+            </if>
+            <if test="subclassCode!=null and subclassCode!=''">
+                and su.scode = #{spareCode}
+            </if>
+            <if test="fazhiStart!=null and fazhiStart!=''">
+                and tv.threshold_num &gt;=#{fazhiStart}
+            </if>
+            <if test="fazhiEnd!=null and fazhiEnd!=''">
+                and tv.threshold_num &lt;= #{fazhiEnd}
+            </if>
+            <if test="updateTimeStart !=null">
+                <![CDATA[   and DATE_FORMAT(tv.modify_time, '%Y-%m-%d')>=  DATE_FORMAT(#{updateTimeStart}, '%Y-%m-%d')   ]]>            </if>
+            <if test="updateTimeEnd !=null">
+                <![CDATA[  and DATE_FORMAT(tv.modify_time, '%Y-%m-%d') <= DATE_FORMAT(#{updateTimeEnd}, '%Y-%m-%d')    ]]>
+            </if>
+            <if test="updateName!=null and updateName=''">
+                and tv.modify_per like concat('%',#{updateName},'%')
+            </if>
+        </where>
+        ORDER BY tv.modify_time DESC LIMIT #{startNum},#{pageSize}
+    </select>
+</mapper>
