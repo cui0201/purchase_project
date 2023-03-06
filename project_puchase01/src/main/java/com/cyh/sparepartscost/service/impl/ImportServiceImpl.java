@@ -50,6 +50,7 @@ public class ImportServiceImpl implements ImportService {
         for (int i = START_ROW_NUM; i <= sheet.getPhysicalNumberOfRows(); i++) {
             ImportModel importModel = new ImportModel();
             try {
+
                 importModel.setLegalPersonCode(legalPersonCode);
                 importModel.setPriceType(priceType);
                 String spareCode = sheet.getRow(i).getCell(1).getStringCellValue();
